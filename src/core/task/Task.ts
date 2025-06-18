@@ -88,8 +88,6 @@ import { ApiMessage } from "../task-persistence/apiMessages"
 import { getMessagesSinceLastSummary, summarizeConversation } from "../condense"
 import { maybeRemoveImageBlocks } from "../../api/transform/image-cleaning"
 import { DomainVectorRetriever } from "../../services/code-index/domain-vector-retriever"
-import { CodeIndexManager } from "../../services/code-index/manager"
-import { OpenAICompatibleEmbedder } from "../../services/code-index/embedders/openai-compatible"
 import { domains } from "../../shared/domains"
 
 export type ClineEvents = {
