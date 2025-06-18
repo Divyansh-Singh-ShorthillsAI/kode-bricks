@@ -96,7 +96,7 @@ Finally, how would you integrate a feedback loop using the evaluation metrics (m
 
 ## 📋 Full Responses
 
-### 🧠 Response from LLM Version 1
+### 🧠 Response from LLM Version 1 (Without RAG Pipeline)
 
 The task is to analyze and propose a debugging and optimization strategy for a forecasting pipeline that uses `forecast_store_item()` via `applyInPandas` over a Spark DataFrame, focusing on improving RMSE scores for specific store-item combinations. The strategy should address repartitioning, handling sparse time series, seasonality modes, automated model selection, and integrating a feedback loop for retraining.
 
@@ -131,7 +131,8 @@ Now, let's start with Step 1: Analyze Repartitioning Strategy. I'll use the `ask
 
 *Concludes after Step 1 with a plan to use a follow-up tool.*
 
-### 🧠 Response from LLM Version 2
+### 🧠 Response from LLM Version 2 (With RAG Pipeline)
+
 Okay, I will analyze the potential issues with the current forecasting pipeline and propose a debugging and optimization strategy.
 
 **1. Repartitioning Strategy:**
