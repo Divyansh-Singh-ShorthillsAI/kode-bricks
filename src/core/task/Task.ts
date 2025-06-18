@@ -87,9 +87,10 @@ import { processUserContentMentions } from "../mentions/processUserContentMentio
 import { ApiMessage } from "../task-persistence/apiMessages"
 import { getMessagesSinceLastSummary, summarizeConversation } from "../condense"
 import { maybeRemoveImageBlocks } from "../../api/transform/image-cleaning"
-import { DomainVectorRetriever, SupportedDomain } from "../../services/code-index/domain-vector-retriever"
-import { CodeIndexOllamaEmbedder } from "../../services/code-index/embedders/ollama"
+import { DomainVectorRetriever } from "../../services/code-index/domain-vector-retriever"
 import { CodeIndexManager } from "../../services/code-index/manager"
+import { OpenAICompatibleEmbedder } from "../../services/code-index/embedders/openai-compatible"
+import { domains } from "../../shared/domains"
 
 export type ClineEvents = {
 	message: [{ action: "created" | "updated"; message: ClineMessage }]
@@ -199,7 +200,6 @@ export class Task extends EventEmitter<ClineEvents> {
 	didRejectTool = false
 	didAlreadyUseTool = false
 	didCompleteReadingStream = false
-	private domainVectorRetriever: DomainVectorRetriever | null = null
 
 	constructor({
 		provider,
@@ -1935,8 +1935,11 @@ export class Task extends EventEmitter<ClineEvents> {
 			return userContent
 		}
 		const state = await provider.getState()
-		const selectedDomain = state?.domain as SupportedDomain | undefined
-		if (!selectedDomain) {
+		const selectedDomain = state?.domain as string | undefined
+
+		// Fetch available domains from shared domains.ts
+		const availableDomains = domains.map((d) => d.slug)
+		if (!selectedDomain || !availableDomains.includes(selectedDomain)) {
 			console.debug(
 				`[DomainContext] No supported domain selected (got: ${selectedDomain}), skipping domain context injection.`,
 			)
@@ -1944,22 +1947,12 @@ export class Task extends EventEmitter<ClineEvents> {
 		}
 		console.debug(`[DomainContext] Domain context pipeline triggered for domain: ${selectedDomain}`)
 		// Get embedder config from CodeIndexManager
-		// @ts-expect-error: accessing private _configManager for prototype/demo
-		const codeIndexManager = CodeIndexManager.getInstance()
-		// @ts-expect-error: accessing private _configManager for prototype/demo
-		const configManager = codeIndexManager?._configManager
-		const ollamaOptions =
-			configManager && configManager["ollamaOptions"]
-				? configManager["ollamaOptions"]
-				: { ollamaBaseUrl: "http://localhost:11434" }
-		const modelId = configManager && configManager["modelId"] ? configManager["modelId"] : "nomic-embed-text:latest"
-		const embedder = new CodeIndexOllamaEmbedder({ ...ollamaOptions, ollamaModelId: modelId })
-		const retriever = new DomainVectorRetriever(embedder)
+		const domainRetriever = new DomainVectorRetriever(selectedDomain)
 		// Extract user prompt text
 		const userPrompt = userContent.map((block) => (this.isTextBlock(block) ? block.text : "")).join("\n")
 		console.debug(`[DomainContext] Embedding user prompt:`, userPrompt)
 		try {
-			const topChunks = await retriever.getTopChunksForQuery(userPrompt, selectedDomain, 5)
+			const topChunks = await domainRetriever.getTopChunksForQuery(userPrompt, 5)
 			console.debug(
 				`[DomainContext] Retrieved top ${topChunks.length} chunks for domain '${selectedDomain}':`,
 				topChunks,
