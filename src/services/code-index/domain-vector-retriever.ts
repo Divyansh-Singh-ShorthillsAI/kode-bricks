@@ -2,8 +2,8 @@ import { domains } from "../../shared/domains"
 import nodeFetch from "node-fetch"
 
 async function createAzureEmbedding(texts: string[]): Promise<number[][]> {
-	const endpoint = process.env.AZURE_OPENAI_EMBEDDING_ENDPOINT as string
-	const apiKey = process.env.AZURE_OPENAI_KEY as string
+	const endpoint = process.env.AZURE_OPENAI_EMBEDDING_ENDPOINT || ""
+	const apiKey = process.env.AZURE_OPENAI_KEY || ""
 	if (!apiKey) throw new Error("AZURE_OPENAI_KEY is not set in environment")
 	const response = await nodeFetch(endpoint, {
 		method: "POST",
